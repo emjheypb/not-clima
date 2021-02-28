@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CoreLocation
 
 class WeatherViewController: UIViewController {
     @IBOutlet weak var type1ImgVw: UIImageView!
@@ -17,12 +18,14 @@ class WeatherViewController: UIViewController {
     @IBOutlet weak var nameTxtFld: UITextField!
     
     var weatherManager = WeatherManager()
+    let locationManager = CLLocationManager()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         nameTxtFld.delegate = self
         weatherManager.delegate = self
+        locationManager.delegate = self
     }
 
     @IBAction func searchPressed(_ sender: UIButton) {
@@ -30,6 +33,9 @@ class WeatherViewController: UIViewController {
     }
     
     @IBAction func locationPressed(_ sender: Any) {
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.requestLocation()
+//        for continuous fetching of location: locationManager.startUpdatingLocation()
     }
 }
 
@@ -81,5 +87,41 @@ extension WeatherViewController: UITextFieldDelegate {
         }
         
         nameTxtFld.text = ""
+    }
+}
+
+//MARK: - CLLocationManagerDelegate
+// #159 Core Location - includes Info.plist changes
+extension WeatherViewController: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let location = locations.last {
+            manager.stopUpdatingLocation()
+            let long = location.coordinate.longitude
+            let lat = location.coordinate.latitude
+            
+            let alert = UIAlertController(title: "Location", message: "Long: \(long)\nLat: \(lat)", preferredStyle: .actionSheet)
+            
+            alert.addAction(UIAlertAction(title: "Approve", style: .default, handler: { (_) in
+                print("User click Approve button")
+            }))
+            
+            alert.addAction(UIAlertAction(title: "Edit", style: .default, handler: { (_) in
+                print("User click Edit button")
+            }))
+            
+            alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { (_) in
+                print("User click Delete button")
+            }))
+            
+            alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: { (_) in
+                print("User click Dismiss button")
+            }))
+            
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print(error)
     }
 }
